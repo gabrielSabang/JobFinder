@@ -52,16 +52,15 @@ UserSchema.pre('save', async function (next) {
     const hash = await bcrypt.hash(this.password, 12);
     this.password = hash;
 
-    next();
   } catch (error) {
-    next(error);
+    console.error('Error hashing password', error);
   }
 });
 
-UserSchema.login = async function (email, password) {
+UserSchema.statics.login = async function (email, password) {
   try {
-    const user = await this.findOne( email )
-    if (!user) {
+    const user = await this.findOne({ email });
+    if (!user || !user.isActive) {
       throw new Error('Invalid email')
     }
     const isMatch = await bcrypt.compare(password, user.password)

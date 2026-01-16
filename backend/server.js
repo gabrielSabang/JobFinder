@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import { Server } from 'socket.io'
 import http from 'http'
 import cors from 'cors'
+import cookieParser from 'cookie-parser'
 
 import { db_connection } from './config/db.connection.js';
 
@@ -26,6 +27,7 @@ const io = new Server(server, {
 app.use(express.json())
 app.use(express.urlencoded({extended: true}))
 app.use(cors())
+app.use(cookieParser())
 
 app.use('/api/users', userRoutes);
 app.use('/api/posts', blogPostRoutes);

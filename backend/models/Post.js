@@ -19,20 +19,7 @@ const PostSchema = new mongoose.Schema({
     type: String,
     trim: true
   }],
-  createdAt: {
-    type: Date,
-    default: Date.now
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now
-  }
-})
-
-PostSchema.pre('save', function(next) {
-  this.updatedAt = Date.now()
-  next()
-})
+}, { timestamps: true })
 
 const Post = mongoose.model('Post', PostSchema)
 export default Post
