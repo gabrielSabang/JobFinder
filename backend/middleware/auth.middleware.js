@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
+import { getCache, setCache } from '../config/redis.js';
 
 export const protect = async (req, res, next) => {
   let token;
@@ -11,9 +12,22 @@ export const protect = async (req, res, next) => {
 
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-      
-      req.user = await User.findById(decoded.id).select('-password');
+      // Check Redis cache first
+      const cacheKey = `user:id:${decoded.id}`;
+      let user = await getCache(cacheKey);
 
+      if (!user) {
+        // Cache miss, fetch from database
+        user = await User.findById(decoded.id).select('-password');
+        if (user) {
+          // Cache the user for 1 hour
+          await setCache(cacheKey, user, 3600);
+        }
+      } else {
+        console.log(`Cache hit for user ID: ${decoded.id}`);
+      }
+
+      req.user = user;
       next();
     } catch (error) {
       console.error('Authentication error:', error);

@@ -1,10 +1,11 @@
 import Post from '../models/Post.js'
+import { setCache, getCache, deleteCache, clearCachePattern } from '../config/redis.js';
 
 export const createPost = async (req, res) => {
   const userId = req.user
   if (!userId)
     return res.status(401).json({ message: 'Unauthorized' })
-
+  
   try {
     const { title, content, tags } = req.body
 
@@ -18,6 +19,10 @@ export const createPost = async (req, res) => {
       tags,
       author: userId
     })
+
+    // Invalidate user's posts cache
+    const cacheKey = `posts:user:${userId}`;
+    await deleteCache(cacheKey);
 
     return res.status(201).json({ message: 'Post created successfully', post })
   } catch (error) {
@@ -33,7 +38,21 @@ export const getPosts = async (req, res) => {
     return res.status(401).json({ message: 'Unauthorized' })
   
   try {
+    const cacheKey = `posts:user:${userId}`;
+    
+    // Check cache first
+    const cachedPosts = await getCache(cacheKey);
+    
+    if (cachedPosts) {
+      console.log(`Cache hit for user posts: ${userId}`);
+      return res.status(200).json({ posts: cachedPosts });
+    }
+
     const posts = await Post.find({ author: userId }).populate('author', 'userName email');
+    
+    // Cache the posts for 30 minutes
+    await setCache(cacheKey, posts, 1800);
+    
     return res.status(200).json({ posts });
   } catch (error) {
     console.error(error);

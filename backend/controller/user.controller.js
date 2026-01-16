@@ -1,6 +1,6 @@
 import User from '../models/User.js'
 import jwt from 'jsonwebtoken'
-
+import { setCache, getCache, deleteCache } from '../config/redis.js';
 
 const maxAge = 3 * 24 * 60 * 60
 
@@ -13,11 +13,24 @@ const getToken = (id) => {
 export const getUser = async (req, res) => {
   try {
       const { userName } = req.params;
+      
+      // Check cache first
+      const cacheKey = `user:${userName}`;
+      const cachedUser = await getCache(cacheKey);
+      
+      if (cachedUser) {
+        console.log(`Cache hit for user: ${userName}`);
+        return res.status(200).json({ user: cachedUser });
+      }
+
       const user = await User.findOne({ userName }).select('-password');
 
       if (!user) {
         return res.status(404).json({ message: 'User not found' });
       }
+
+      // Cache the user data for 1 hour
+      await setCache(cacheKey, user, 3600);
 
       return res.status(200).json({ user });
     } catch (error) {
@@ -48,6 +61,11 @@ export const userSignUp = async (req, res) => {
       email,
       password
     })
+    
+    // Cache the new user
+    const cacheKey = `user:${userName}`;
+    await setCache(cacheKey, user, 3600);
+    
     const token = getToken(user._id)
 
     res.cookie('jwt', token, { httpOnly: true, maxAge: maxAge * 1000 })
@@ -72,6 +90,11 @@ export const userLogin = async (req, res) => {
     const user = await User.login(email, password)
 
     const token = getToken(user._id)
+    
+    // Cache the logged-in user session
+    const sessionKey = `session:${user._id}`;
+    await setCache(sessionKey, { userId: user._id, userName: user.userName }, 86400); // 24 hours
+
     res.cookie('jwt', token, { httpOnly: true, maxAge: maxAge * 1000 })
 
     return res.status(200).json({ message: 'User logged in successfully', user: user._id })
@@ -82,13 +105,19 @@ export const userLogin = async (req, res) => {
   }
 }
 
-export const userLogout = (req, res) => {
+export const userLogout = async (req, res) => {
   const userCookie = req.cookies['jwt']
   
   if(!userCookie)
     return res.status(400).json({message: 'User is already logged out'})
 
   try {
+    // Clear user session from cache
+    if (req.user) {
+      const sessionKey = `session:${req.user._id}`;
+      await deleteCache(sessionKey);
+    }
+
     res.cookie('jwt', '', {maxAge: 1})
     return res.status(200).json({message: "User logged out successfully"})
   } catch (error) {
