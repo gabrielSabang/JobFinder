@@ -4,8 +4,8 @@ import { Server } from 'socket.io'
 import http from 'http'
 import cors from 'cors'
 import cookieParser from 'cookie-parser';
+
 import { db_connection } from './config/db.connection.js';
-import { redis } from './config/redis.js';
 import rateLimiter from './middleware/rateLimiter.middleware.js';
 import userRoutes from './routes/user.routes.js';
 import blogPostRoutes from './routes/blogPost.routes.js';

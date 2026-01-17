@@ -20,7 +20,6 @@ export const createPost = async (req, res) => {
       author: userId
     })
 
-    // Invalidate user's posts cache
     const cacheKey = `posts:user:${userId}`;
     await deleteCache(cacheKey);
 
@@ -40,7 +39,6 @@ export const getPosts = async (req, res) => {
   try {
     const cacheKey = `posts:user:${userId}`;
     
-    // Check cache first
     const cachedPosts = await getCache(cacheKey);
     
     if (cachedPosts) {
@@ -50,7 +48,6 @@ export const getPosts = async (req, res) => {
 
     const posts = await Post.find({ author: userId }).populate('author', 'userName email');
     
-    // Cache the posts for 30 minutes
     await setCache(cacheKey, posts, 1800);
     
     return res.status(200).json({ posts });
