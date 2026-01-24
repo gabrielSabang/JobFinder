@@ -20,7 +20,7 @@ export const createPost = async (req, res) => {
       author: userId
     })
 
-    const cacheKey = `posts:user:${userId}`;
+    const cacheKey = `posts:user:${userId}:*`; 
     await deleteCache(cacheKey);
 
     return res.status(201).json({ message: 'Post created successfully', post })
@@ -37,20 +37,25 @@ export const getPosts = async (req, res) => {
     return res.status(401).json({ message: 'Unauthorized' })
   
   try {
-    const cacheKey = `posts:user:${userId}`;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const cacheKey = `posts:user:${userId}:${page}:${limit}`;
     
     const cachedPosts = await getCache(cacheKey);
     
     if (cachedPosts) {
-      console.log(`Cache hit for user posts: ${userId}`);
-      return res.status(200).json({ posts: cachedPosts });
+      console.log(`Cache hit for user posts: ${userId} (page ${page}, limit ${limit})`);
+      return res.status(200).json(cachedPosts);
     }
 
-    const posts = await Post.find({ author: userId }).populate('author', 'userName email');
+    const posts = await Post.find({ author: userId }).populate('author', 'userName email').skip(skip).limit(limit);
+    const totalPosts = await Post.countDocuments({ author: userId });
     
-    await setCache(cacheKey, posts, 1800);
+    await setCache(cacheKey, { posts, totalPosts, page, limit }, 1800);
     
-    return res.status(200).json({ posts });
+    return res.status(200).json({ posts, totalPosts, page, limit });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: 'Server error' });

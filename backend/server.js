@@ -1,16 +1,16 @@
 import express from 'express';
 import dotenv from 'dotenv';
-import { Server } from 'socket.io'
 import http from 'http'
 import cors from 'cors'
 import cookieParser from 'cookie-parser';
+import { Server } from 'socket.io'
 
 import { db_connection } from './config/db.connection.js';
-import rateLimiter from './middleware/rateLimiter.middleware.js';
 import userRoutes from './routes/user.routes.js';
 import blogPostRoutes from './routes/blogPost.routes.js';
 import commentRoutes from './routes/comment.routes.js';
 import messageRoutes from './routes/message.routes.js';
+import { authenticateToken } from './middleware/auth.middleware.js'; // Import the new middleware
 
 dotenv.config();
 
@@ -22,20 +22,28 @@ const PORT = process.env.PORT || 8000;
 
 const io = new Server(server, {
   cors: {
-    origin: "*",
+    origin: "http://localhost:5173",
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE"], 
   }
 })
 
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
-app.use(cors())
-app.use(cookieParser())
+app.use(cookieParser());
 
-app.use(rateLimiter); 
-app.use('/api/users', userRoutes);
-app.use('/api/posts', blogPostRoutes);
-app.use('/api/comments', commentRoutes);
-app.use('/api/messages', messageRoutes);
+app.use(cors({
+  origin: "http://localhost:5173", 
+  credentials: true,
+}));
+
+// Public routes (login, signup)
+app.use('/api/users', userRoutes); // Assuming login and signup are part of userRoutes
+
+// Protected routes - apply authentication middleware
+app.use('/api/posts', authenticateToken, blogPostRoutes);
+app.use('/api/comments', authenticateToken, commentRoutes);
+app.use('/api/messages', authenticateToken, messageRoutes);
 
 io.on('connection', (socket) => {
   console.log('a user connected', socket.id);

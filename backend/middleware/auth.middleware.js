@@ -1,41 +1,23 @@
 import jwt from 'jsonwebtoken';
-import User from '../models/User.js';
-import { getCache, setCache } from '../config/redis.js';
+import User from '../models/User.js'; 
 
-export const protect = async (req, res, next) => {
-  let token;
-
-  if (req.cookies && req.cookies.jwt) {
-    try {
-      
-      token = req.cookies.jwt;
-
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-      // Check Redis cache first
-      const cacheKey = `user:id:${decoded.id}`;
-      let user = await getCache(cacheKey);
-
-      if (!user) {
-        // Cache miss, fetch from database
-        user = await User.findById(decoded.id).select('-password');
-        if (user) {
-          // Cache the user for 1 hour
-          await setCache(cacheKey, user, 3600);
-        }
-      } else {
-        console.log(`Cache hit for user ID: ${decoded.id}`);
-      }
-
-      req.user = user;
-      next();
-    } catch (error) {
-      console.error('Authentication error:', error);
-      return res.status(401).json({ message: 'Not authorized, token failed' });
-    }
-  }
+export const authenticateToken = async (req, res, next) => {
+  const token = req.cookies.jwt;
 
   if (!token) {
-    return res.status(401).json({ message: 'Not authorized, no token' });
+    return res.status(401).json({ message: 'Unauthorized: No token provided' });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id).select('-password');
+    if (!user) {
+      return res.status(404).json({ message: 'Unauthorized: User not found' });
+    }
+    req.user = user; 
+    next(); 
+  } catch (error) {
+    console.error('Error verifying token:', error);
+    return res.status(403).json({ message: 'Unauthorized: Invalid token' });
   }
 };
