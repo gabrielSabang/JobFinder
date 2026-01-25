@@ -37,10 +37,8 @@ app.use(cors({
   credentials: true,
 }));
 
-// Public routes (login, signup)
-app.use('/api/users', userRoutes); // Assuming login and signup are part of userRoutes
+app.use('/api/users', userRoutes); 
 
-// Protected routes - apply authentication middleware
 app.use('/api/posts', authenticateToken, blogPostRoutes);
 app.use('/api/comments', authenticateToken, commentRoutes);
 app.use('/api/messages', authenticateToken, messageRoutes);

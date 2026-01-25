@@ -96,14 +96,7 @@ export const userLogin = async (req, res) => {
 }
 
 export const userLogout = async (req, res) => {
-  const userCookie = req.cookies['jwt']
-  
-  if(!userCookie)
-    return res.status(400).json({message: 'User is already logged out'})
-
   try {
-    
-
     res.cookie('jwt', '', {maxAge: 1})
     return res.status(200).json({message: "User logged out successfully"})
   } catch (error) {

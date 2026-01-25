@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js'; 
 
-export const authenticateToken = async (req, res, next) => {
+const protect = async (req, res, next) => {
   const token = req.cookies.jwt;
 
   if (!token) {
@@ -21,3 +21,5 @@ export const authenticateToken = async (req, res, next) => {
     return res.status(403).json({ message: 'Unauthorized: Invalid token' });
   }
 };
+
+export { protect, protect as authenticateToken };
