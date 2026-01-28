@@ -50,7 +50,7 @@ io.on('connection', (socket) => {
   });
 });
 
-Promise.all([db_connection()])
+db_connection()
   .then(() => {
     console.log('Connected to Database');
 

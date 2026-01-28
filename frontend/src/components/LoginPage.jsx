@@ -1,5 +1,6 @@
 import React, { useState, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import AuthContext from '../context/AuthContext';
 
 const LoginPage = () => {
@@ -11,22 +12,11 @@ const LoginPage = () => {
   const submitHandler = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch('/api/users/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        login(data);
-        navigate('/home');
-      } else {
-        alert(data.message || 'Something went wrong');
-      }
+      const { data } = await axios.post('http://localhost:8000/api/users/login', { email, password }, { withCredentials: true });
+      login(data);
+      navigate('/home');
     } catch (error) {
-      alert('Login failed');
+      alert(error.response?.data?.message || error.message || 'Login failed');
     }
   };
 

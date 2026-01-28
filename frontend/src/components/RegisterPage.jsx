@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const RegisterPage = () => {
   const [name, setName] = useState('');
@@ -14,21 +15,21 @@ const RegisterPage = () => {
       alert('Passwords do not match');
     } else {
       try {
-        const res = await fetch('/api/users/register', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ name, email, password }),
-        });
-        const data = await res.json();
-        if (res.ok) {
-          navigate('/login');
-        } else {
-          alert(data.message || 'Something went wrong');
-        }
+        const userData = {
+          userName: name,
+          email,
+          password,
+        };
+        await axios.post(
+          'http://localhost:8000/api/users/signup',
+          userData,
+          { withCredentials: true }
+        );
+        navigate('/login');
       } catch (error) {
-        alert('Registration failed');
+        alert(
+          error.response?.data?.message || error.message || 'Registration failed'
+        );
       }
     }
   };
