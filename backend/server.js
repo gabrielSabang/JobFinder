@@ -10,13 +10,11 @@ import userRoutes from './routes/user.routes.js';
 import blogPostRoutes from './routes/blogPost.routes.js';
 import commentRoutes from './routes/comment.routes.js';
 import messageRoutes from './routes/message.routes.js';
-import { authenticateToken } from './middleware/auth.middleware.js'; // Import the new middleware
+import { authenticateToken } from './middleware/auth.middleware.js';
 
 dotenv.config();
-
 const app = express();
 const server = http.createServer(app)
-
 
 const PORT = process.env.PORT || 8000;
 
@@ -38,7 +36,6 @@ app.use(cors({
 }));
 
 app.use('/api/users', userRoutes); 
-
 app.use('/api/posts', authenticateToken, blogPostRoutes);
 app.use('/api/comments', authenticateToken, commentRoutes);
 app.use('/api/messages', authenticateToken, messageRoutes);

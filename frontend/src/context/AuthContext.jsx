@@ -4,11 +4,10 @@ import axios from 'axios';
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [userInfo, setUserInfo] = useState(null);
+  const [userInfo, setUserInfo] = useState({});
 
   const login = (userData) => {
-    setUserInfo(userData);
-    localStorage.setItem('userInfo', JSON.stringify(userData));
+    const data = axios.get()
   };
 
   const logout = async () => {

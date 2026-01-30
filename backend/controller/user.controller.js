@@ -12,39 +12,72 @@ const getToken = (id) => {
 
 export const getUser = async (req, res) => {
   try {
-      const { userName } = req.params;
-      
-      const cacheKey = `user:${userName}`;
-      const cachedUser = await getCache(cacheKey);
-      
-      if (cachedUser) {
-        console.log(`Cache hit for user: ${userName}`);
-        return res.status(200).json({ user: cachedUser });
-      }
+    const { userName } = req.params;
 
-      const user = await User.findOne({ userName }).select('-password');
+    const cacheKey = `user:${userName}`;
+    const cachedUser = await getCache(cacheKey);
 
-      if (!user) {
-        return res.status(404).json({ message: 'User not found' });
-      }
-
-      await setCache(cacheKey, user, 3600);
-
-      return res.status(200).json({ user });
-    } catch (error) {
-      console.error('Error fetching user:', error);
-      return res.status(500).json({ message: 'Server error while fetching user.' });
+    if (cachedUser) {
+      console.log(`Cache hit for user: ${userName}`);
+      return res.status(200).json({ user: cachedUser });
     }
+
+    const user = await User.findOne({ userName }).select('-password');
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    await setCache(cacheKey, user, 3600);
+
+    return res.status(200).json({ user });
+  } catch (error) {
+    console.error('Error fetching user:', error);
+    return res.status(500).json({ message: 'Server error while fetching user.' });
+  }
+}
+
+export const searchUsers = async (req, res) => {
+  try {
+    const { q } = req.query;
+
+    if (!q || q.trim() === '') {
+      return res.status(200).json({ users: [] });
+    }
+
+    const users = await User.find({
+      $or: [
+        { userName: { $regex: q, $options: 'i' } },
+        { email: { $regex: q, $options: 'i' } }
+      ]
+    }).select('-password').limit(10);
+
+    return res.status(200).json({ users });
+  } catch (error) {
+    console.error('Error searching users:', error);
+    return res.status(500).json({ users: [], message: 'Server error while searching users.' });
+  }
 }
 
 export const getMe = async (req, res) => {
-  const user = req.user;
-
-  if (!user) {
+  const userId = req.user;
+  if (!userId) {
     return res.status(404).json({ message: 'User not found' });
   }
-  return res.status(200).json({ user });
-};
+
+  try {
+    const userData = await User.findById(userId);
+
+    if (!userData)
+      return res.status(404).json({ message: "user not found" })
+
+    const { userName, email } = userData;
+    return res.status(200).json({ user: userData });
+
+  } catch (error) {
+    return res.status(500).json({ message: 'Server error' });
+  }
+}
 
 
 export const userSignUp = async (req, res) => {
@@ -59,7 +92,7 @@ export const userSignUp = async (req, res) => {
       email,
       password
     })
-    
+
     const token = getToken(user._id)
 
     res.cookie('jwt', token, { httpOnly: true, maxAge: maxAge * 1000 })
@@ -84,7 +117,7 @@ export const userLogin = async (req, res) => {
     const user = await User.login(email, password)
 
     const token = getToken(user._id)
-  
+
     res.cookie('jwt', token, { httpOnly: true, maxAge: maxAge * 1000 })
 
     return res.status(200).json({ message: 'User logged in successfully', user: user._id })
@@ -97,9 +130,9 @@ export const userLogin = async (req, res) => {
 
 export const userLogout = async (req, res) => {
   try {
-    res.cookie('jwt', '', {maxAge: 1})
-    return res.status(200).json({message: "User logged out successfully"})
+    res.cookie('jwt', '', { maxAge: 1 })
+    return res.status(200).json({ message: "User logged out successfully" })
   } catch (error) {
-    return res.status(500).json({message: "Could not log out user: Server Error"})
+    return res.status(500).json({ message: "Could not log out user: Server Error" })
   }
 }
