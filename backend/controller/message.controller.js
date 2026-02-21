@@ -24,7 +24,7 @@ export const sendMessage = async (req, res) => {
     const sortedUserIds = [senderId, receiver].sort();
     const cachePattern = `messages:${sortedUserIds[0]}:${sortedUserIds[1]}:*`;
     await clearCachePattern(cachePattern);
-    
+
     // TODO: Emit message via socket.io
     return res.status(201).json({ message: 'Message sent successfully', data: message });
   } catch (error) {
@@ -32,6 +32,8 @@ export const sendMessage = async (req, res) => {
     return res.status(500).json({ message: 'Server error while sending message.' });
   }
 };
+
+
 
 export const getMessage = async (req, res) => {
   const userId = req.user
@@ -62,7 +64,7 @@ export const getMessage = async (req, res) => {
         { sender: withUserId, receiver: userId },
       ],
     }).populate('sender', 'userName email').populate('receiver', 'userName email').sort({ createdAt: 1 });
-    await setCache(cacheKey, messages, 3600); 
+    await setCache(cacheKey, messages, 3600);
     return res.status(200).json({ messages });
   } catch (error) {
     console.error('Error fetching messages:', error);

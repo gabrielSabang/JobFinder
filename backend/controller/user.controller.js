@@ -71,9 +71,14 @@ export const getMe = async (req, res) => {
     if (!userData)
       return res.status(404).json({ message: "user not found" })
 
-    const { userName, email } = userData;
-    return res.status(200).json({ user: userData });
+    // Only send back non-sensitive user information
+    const safeUserData = {
+      _id: userData._id,
+      userName: userData.userName,
+      email: userData.email
+    };
 
+    return res.status(200).json({ user: safeUserData });
   } catch (error) {
     return res.status(500).json({ message: 'Server error' });
   }
@@ -120,7 +125,13 @@ export const userLogin = async (req, res) => {
 
     res.cookie('jwt', token, { httpOnly: true, maxAge: maxAge * 1000 })
 
-    return res.status(200).json({ message: 'User logged in successfully', user: user._id })
+    const safeUserData = {
+      _id: user._id,
+      userName: user.userName,
+      email: user.email
+    };
+
+    return res.status(200).json({ message: 'User logged in successfully', user: safeUserData })
 
   } catch (error) {
     console.error('Error during user login:', error.message);

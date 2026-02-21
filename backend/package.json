@@ -1,15 +1,16 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "main": "index.js",
+  "description": "",
+  "license": "ISC",
+  "author": "",
   "type": "module",
+  "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "start": "node server.js"
   },
-  "author": "",
-  "license": "ISC",
-  "description": "",
   "dependencies": {
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.36.1",

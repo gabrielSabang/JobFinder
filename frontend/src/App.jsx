@@ -8,6 +8,8 @@ import LandingPage from './components/LandingPage'
 import Contact from './components/Contact'
 import LoginPage from './components/LoginPage'
 import RegisterPage from './components/RegisterPage'
+import { ChatList } from './components/ChatList'
+import { ChatRoom } from './components/ChatRoom'
 
 
 function App() {
@@ -23,6 +25,9 @@ function App() {
         <Route path="/contact" element={<Contact />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/chats" element={<ChatList />} />
+        <Route path="/chatroom" element={<ChatRoom />} />
+
       </Routes>
     </>
   )

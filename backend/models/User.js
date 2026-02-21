@@ -48,8 +48,8 @@ UserSchema.pre('save', async function (next) {
     if (!this.password) {
       throw new Error('Password is required');
     }
-
-    const hash = await bcrypt.hash(this.password, 12);
+    const salt = await bcrypt.genSalt(12);
+    const hash = await bcrypt.hash(this.password, salt);
     this.password = hash;
 
   } catch (error) {

@@ -100,7 +100,7 @@ const Navbar = () => {
                   <Link to="/home" className="text-gray-500 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">
                     Home
                   </Link>
-                  <Link to="/messages" className="text-gray-500 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">
+                  <Link to="/chats" className="text-gray-500 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">
                     Messages
                   </Link>
                 </div>
@@ -119,7 +119,7 @@ const Navbar = () => {
                           searchResults.map((user) => (
                             <Link
                               key={user._id}
-                              to={`/users/${user._id}`} // Assuming a user profile page route
+                              to={`/users/${user._id}`} 
                               onClick={handleUserClick}
                               className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                               role="menuitem"
@@ -137,7 +137,7 @@ const Navbar = () => {
                   )}
                 </form>
                 <div className="flex items-center space-x-4">
-                  <span className="text-gray-800 text-sm font-medium">Welcome, {userInfo.name}</span>
+                  <span className="text-gray-800 text-sm font-medium">Welcome, {userInfo.userName}</span>
                   <button
                     onClick={handleLogout}
                     className="text-gray-500 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium"
