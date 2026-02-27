@@ -70,7 +70,7 @@ UserSchema.statics.login = async function (email, password) {
     return user
 
   } catch (error) {
-    throw new Error(error.message);
+    throw new Error(error.message, { cause: error });
   }
 }
 

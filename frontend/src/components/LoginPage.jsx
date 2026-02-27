@@ -2,6 +2,7 @@ import React, { useState, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import AuthContext from '../context/AuthContext';
+import { API_URLS } from '../config/api';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -12,7 +13,7 @@ const LoginPage = () => {
   const submitHandler = async (e) => {
     e.preventDefault();
     try {
-      const { data } = await axios.post('http://localhost:8000/api/users/login', { email, password }, { withCredentials: true });
+      const { data } = await axios.post(`${API_URLS.USERS}/login`, { email, password }, { withCredentials: true });
       login(data);
       navigate('/home');
     } catch (error) {

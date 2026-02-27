@@ -2,6 +2,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useContext, useState, useEffect, useRef } from 'react';
 import AuthContext from '../context/AuthContext';
 import axios from 'axios';
+import { API_URLS } from '../config/api';
 
 const Navbar = () => {
   const { userInfo, logout } = useContext(AuthContext);
@@ -18,21 +19,21 @@ const Navbar = () => {
 
   useEffect(() => {
     if (searchQuery.trim() === '') {
-      setSearchResults([]);
-      setIsDropdownOpen(false);
       return;
     }
 
     const fetchUsers = async () => {
       try {
         const { data } = await axios.get(
-          `http://localhost:8000/api/users?q=${encodeURIComponent(searchQuery)}`,
+          `${API_URLS.USERS}?q=${encodeURIComponent(searchQuery)}`,
           { withCredentials: true }
         );
         setSearchResults(data.users || []);
         setIsDropdownOpen(data.users && data.users.length > 0);
       } catch (error) {
-        console.error('Search failed:', error.response?.data || error.message);
+        if (error.response?.status !== 401) {
+          console.error('Search failed:', error.response?.data || error.message);
+        }
         setSearchResults([]);
         setIsDropdownOpen(false);
       }
@@ -58,15 +59,10 @@ const Navbar = () => {
     };
   }, []);
 
-  const handleUserClick = () => {
-    setSearchQuery('');
-    setIsDropdownOpen(false);
-  };
-
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      navigate(`/search?q=${searchQuery}`);
+      navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
       setIsDropdownOpen(false);
     }
   };
@@ -100,7 +96,7 @@ const Navbar = () => {
                   <Link to="/home" className="text-gray-500 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">
                     Home
                   </Link>
-                  <Link to="/chats" className="text-gray-500 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">
+                  <Link to="/chat" className="text-gray-500 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">
                     Messages
                   </Link>
                 </div>
@@ -109,7 +105,13 @@ const Navbar = () => {
                     type="text"
                     placeholder="Search users..."
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      if (e.target.value.trim() === '') {
+                        setSearchResults([]);
+                        setIsDropdownOpen(false);
+                      }
+                    }}
                     className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                   />
                   {isDropdownOpen && (
@@ -119,12 +121,13 @@ const Navbar = () => {
                           searchResults.map((user) => (
                             <Link
                               key={user._id}
-                              to={`/users/${user._id}`} 
-                              onClick={handleUserClick}
+                              to={`/users/${user.userName}`}
+                              onClick={() => setIsDropdownOpen(false)}
                               className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                               role="menuitem"
                             >
-                              {user.name}
+                              <div className="font-medium">{user.userName}</div>
+                              <div className="text-gray-500">{user.email}</div>
                             </Link>
                           ))
                         ) : (

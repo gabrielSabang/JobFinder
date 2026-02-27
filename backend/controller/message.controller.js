@@ -1,5 +1,5 @@
 import Message from '../models/Message.js';
-import { getCache, setCache, deleteCache } from '../config/redis.js';
+import { getCache, setCache, clearCachePattern } from '../config/redis.js';
 
 export const sendMessage = async (req, res) => {
   const senderId = req.user;
@@ -32,7 +32,6 @@ export const sendMessage = async (req, res) => {
     return res.status(500).json({ message: 'Server error while sending message.' });
   }
 };
-
 
 
 export const getMessage = async (req, res) => {

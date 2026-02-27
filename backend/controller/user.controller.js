@@ -1,6 +1,6 @@
 import User from '../models/User.js'
 import jwt from 'jsonwebtoken'
-import { setCache, getCache, deleteCache } from '../config/redis.js';
+import { setCache, getCache } from '../config/redis.js';
 
 const maxAge = 3 * 24 * 60 * 60
 
@@ -41,16 +41,17 @@ export const searchUsers = async (req, res) => {
   try {
     const { q } = req.query;
 
-    if (!q || q.trim() === '') {
-      return res.status(200).json({ users: [] });
+    let query = {};
+    if (q && q.trim() !== '') {
+      query = {
+        $or: [
+          { userName: { $regex: q, $options: 'i' } },
+          { email: { $regex: q, $options: 'i' } }
+        ]
+      };  
     }
 
-    const users = await User.find({
-      $or: [
-        { userName: { $regex: q, $options: 'i' } },
-        { email: { $regex: q, $options: 'i' } }
-      ]
-    }).select('-password').limit(10);
+    const users = await User.find(query).select('-password').limit(q ? 10 : 50);
 
     return res.status(200).json({ users });
   } catch (error) {
@@ -60,7 +61,7 @@ export const searchUsers = async (req, res) => {
 }
 
 export const getMe = async (req, res) => {
-  const userId = req.user;
+  const userId = req.user._id;
   if (!userId) {
     return res.status(404).json({ message: 'User not found' });
   }
@@ -79,7 +80,7 @@ export const getMe = async (req, res) => {
     };
 
     return res.status(200).json({ user: safeUserData });
-  } catch (error) {
+  } catch {
     return res.status(500).json({ message: 'Server error' });
   }
 }
@@ -143,7 +144,7 @@ export const userLogout = async (req, res) => {
   try {
     res.cookie('jwt', '', { maxAge: 1 })
     return res.status(200).json({ message: "User logged out successfully" })
-  } catch (error) {
+  } catch {
     return res.status(500).json({ message: "Could not log out user: Server Error" })
   }
 }

@@ -15,7 +15,7 @@ export const authenticate = async (req, res, next) => {
     req.user = decoded.id
     next();
     
-  } catch (error) {
+  } catch {
     return res.status(401).json({message: 'Authentication failed'})
   }
 }

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { API_URLS } from '../config/api';
 
 const RegisterPage = () => {
   const [name, setName] = useState('');
@@ -21,7 +22,7 @@ const RegisterPage = () => {
           password,
         };
         await axios.post(
-          'http://localhost:8000/api/users/signup',
+          `${API_URLS.USERS}/signup`,
           userData,
           { withCredentials: true }
         );
