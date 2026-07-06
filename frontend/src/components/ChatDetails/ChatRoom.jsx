@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext, useRef, useCallback } from 'rea
 import axios from 'axios';
 import { io } from 'socket.io-client';
 import AuthContext from '../../context/AuthContext.jsx';
+import { API_URLS } from '../../config/api';
 
 /* global __API_BASE_URL__ */
 const socket = io(__API_BASE_URL__, { withCredentials: true });
@@ -27,7 +28,7 @@ export const ChatRoom = ({ selectedUser }) => {
     if (!selectedUser || !userInfo) return;
     setLoading(true);
     try {
-      const { data } = await axios.get(`http://localhost:8000/api/messages/${selectedUser._id}`, {
+      const { data } = await axios.get(`${API_URLS.MESSAGES}/${selectedUser._id}`, {
         withCredentials: true,
       });
       setMessages(data.messages);
@@ -62,36 +63,35 @@ export const ChatRoom = ({ selectedUser }) => {
     setNewMessage('');
   };
 
-  if (!selectedUser) return <div>Select a user to start chatting</div>;
+  if (!selectedUser) return <div className="flex items-center justify-center h-full text-warm-gray">Select a user to start chatting</div>;
 
   return (
     <div className="chat-room flex flex-col h-full">
-      <div className="chat-header p-4 border-b">
-        <h1>Chat with {selectedUser.userName}</h1>
-      </div>
-      <div className="messages flex-1 overflow-y-auto p-4">
+      <div className="messages flex-1 overflow-y-auto">
         {loading ? (
-          <div>Loading messages...</div>
+          <div className="p-4 text-ink">Loading messages...</div>
         ) : (
           messages.map((msg, index) => (
-            <div key={index} className={`message mb-2 ${msg.sender === userInfo._id ? 'text-right' : 'text-left'}`}>
-              <span className={`inline-block p-2 rounded ${msg.sender === userInfo._id ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}>
+            <div key={index} className={`msg flex gap-2 mb-3 ${msg.sender === userInfo._id ? 'user flex-row-reverse' : ''}`}>
+              <div className={`bubble p-3 rounded-2xl text-sm leading-relaxed max-w-[80%] word-break break-word ${msg.sender === userInfo._id ? 'bg-ink text-cream rounded-br' : 'bg-white text-ink rounded-bl shadow-custom'}`}>
                 {msg.content}
-              </span>
+              </div>
             </div>
           ))
         )}
         <div ref={messagesEndRef} />
       </div>
-      <form onSubmit={sendMessage} className="message-input p-4 border-t flex">
-        <input
-          type="text"
+      <form onSubmit={sendMessage} className="chat-input-row p-4 flex gap-2 items-end">
+        <textarea
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
           placeholder="Type a message..."
-          className="flex-1 p-2 border rounded"
+          className="chat-input flex-1 p-3 border border-border rounded-xl bg-white text-sm resize-none min-h-11 max-h-30 outline-none focus:border-accent"
+          rows="1"
         />
-        <button type="submit" className="ml-2 px-4 py-2 bg-blue-500 text-white rounded">Send</button>
+        <button type="submit" className="send-btn w-10 h-10 bg-ink border-none rounded-xl cursor-pointer text-cream flex items-center justify-center transition hover:bg-accent hover:scale-105">
+          Send
+        </button>
       </form>
     </div>
   );

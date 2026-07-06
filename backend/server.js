@@ -12,12 +12,14 @@ import commentRoutes from './routes/comment.routes.js';
 import messageRoutes from './routes/message.routes.js';
 import Message from './models/Message.js';
 import { authenticateToken } from './middleware/auth.middleware.js';
+import { setFallbackMode, createFallbackMessage, isFallbackMode } from './config/fallbackStore.js';
 
 dotenv.config();
 const app = express();
 const server = http.createServer(app)
 
 const PORT = parseInt(process.env.PORT) || 8000;
+const HOST = process.env.HOST || '127.0.0.1';
 
 const io = new Server(server, {
   cors: {
@@ -39,7 +41,7 @@ app.use(cookieParser());
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests from localhost on any port during development
+   
     if (!origin || origin.startsWith('http://localhost:')) {
       callback(null, true);
     } else {
@@ -65,11 +67,16 @@ io.on('connection', (socket) => {
   socket.on('sendMessage', async (data) => {
     const { sender, receiver, content } = data;
     try {
-      const message = await Message.create({
-        sender,
-        receiver,
-        content,
-      });
+      let message;
+      if (isFallbackMode()) {
+        message = await createFallbackMessage({ sender, receiver, content });
+      } else {
+        message = await Message.create({
+          sender,
+          receiver,
+          content,
+        });
+      }
       io.to(receiver).emit('receiveMessage', message);
       io.to(sender).emit('messageSent', message);
     } catch (error) {
@@ -82,25 +89,26 @@ io.on('connection', (socket) => {
   });
 });
 
-db_connection()
-  .then(() => {
+const startServer = (port) => {
+  try {
+    server.listen(port, HOST, () => {
+      console.log(`Server running on http://${HOST}:${port}`);
+    });
+  } catch (err) {
+    console.error('Server error:', err);
+  }
+};
+
+const initializeServer = async () => {
+  try {
+    await db_connection();
     console.log('Connected to Database');
+  } catch (error) {
+    console.warn('Database connection failed, running in fallback mode:', error.message);
+    setFallbackMode(true);
+  }
 
-    const startServer = (port) => {
-      server.listen(port, () => {
-        console.log(`Server running on port ${port}`);
-      }).on('error', (err) => {
-        if (err.code === 'EADDRINUSE') {
-          console.log(`Port ${port} is busy, trying ${port + 1}...`);
-          startServer(port + 1);
-        } else {
-          console.error('Server error:', err);
-        }
-      });
-    };
+  startServer(PORT);
+};
 
-    startServer(PORT);
-  })
-  .catch((err) => {
-    console.error('Database connection error:', err);
-  });
+initializeServer();

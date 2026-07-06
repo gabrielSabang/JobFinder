@@ -30,14 +30,14 @@ export const ChatList = ({ onSelectUser }) => {
     }
   }, [userInfo]);
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <div className="p-4 text-ink">Loading...</div>;
 
   return (
-    <div className="chat-list">
-      <h2>Chats</h2>
-      <ul>
+    <div className="chat-list p-4">
+      <h2 className="text-xl font-bold text-ink mb-4 font-playfair">Chats</h2>
+      <ul className="space-y-2">
         {users.map(user => (
-          <li key={user._id} onClick={() => onSelectUser(user)} className="cursor-pointer p-2 hover:bg-gray-200">
+          <li key={user._id} onClick={() => onSelectUser(user)} className="cursor-pointer p-3 hover:bg-cream rounded-lg text-ink">
             {user.userName}
           </li>
         ))}

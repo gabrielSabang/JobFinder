@@ -6,9 +6,10 @@ const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [userInfo, setUserInfo] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   const login = async (loginResponse) => {
-    setUserInfo(loginResponse.user);
+    setUserInfo(loginResponse.user || null);
   };
 
   const logout = async () => {
@@ -29,11 +30,12 @@ export const AuthProvider = ({ children }) => {
         });
         setUserInfo(data.user);
       } catch (error) {
-        // Only log actual errors, not 401 unauthorized (expected when not logged in)
         if (error.response?.status !== 401) {
           console.error('Failed to check user status:', error);
         }
         setUserInfo(null);
+      } finally {
+        setLoading(false);
       }
     };
  
@@ -42,7 +44,7 @@ export const AuthProvider = ({ children }) => {
 
  
   return (
-    <AuthContext.Provider value={{ userInfo, login, logout }}>
+    <AuthContext.Provider value={{ userInfo, loading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

@@ -38,17 +38,17 @@ const Search = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-4">Search Results for "{query}"</h1>
-      {loading && <p>Loading...</p>}
-      {error && <p className="text-red-500">{error}</p>}
+      <h1 className="text-2xl font-bold mb-4 text-ink font-playfair">Search Results for "{query}"</h1>
+      {loading && <p className="text-ink">Loading...</p>}
+      {error && <p className="text-accent">{error}</p>}
       {!loading && !error && results.length === 0 && query && (
-        <p>No users found.</p>
+        <p className="text-warm-gray">No users found.</p>
       )}
       <div className="grid gap-4">
         {results.map((user) => (
-          <Link key={user._id} to={`/users/${user.userName}`} className="border p-4 rounded hover:bg-gray-50 block">
-            <div className="text-xl font-semibold">{user.userName}</div>
-            <p className="text-gray-600">{user.email}</p>
+          <Link key={user._id} to={`/users/${user.userName}`} className="border border-border p-4 rounded bg-parchment hover:bg-cream block">
+            <div className="text-xl font-semibold text-ink">{user.userName}</div>
+            <p className="text-warm-gray">{user.email}</p>
           </Link>
         ))}
       </div>

@@ -1,6 +1,6 @@
 // API configuration
 /* global __API_BASE_URL__ */
-const API_BASE_URL = __API_BASE_URL__ || 'http://localhost:8000';
+const API_BASE_URL = __API_BASE_URL__ || 'http://127.0.0.1:8000';
 
 export const API_URLS = {
   BASE: API_BASE_URL,

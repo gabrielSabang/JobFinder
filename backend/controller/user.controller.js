@@ -1,6 +1,15 @@
 import User from '../models/User.js'
 import jwt from 'jsonwebtoken'
+import bcrypt from 'bcrypt';
 import { setCache, getCache } from '../config/redis.js';
+import {
+  createFallbackUser,
+  getFallbackUserByEmail,
+  getFallbackUserById,
+  getFallbackUserByUserName,
+  searchFallbackUsers,
+  isFallbackMode,
+} from '../config/fallbackStore.js';
 
 const maxAge = 3 * 24 * 60 * 60
 
@@ -22,7 +31,12 @@ export const getUser = async (req, res) => {
       return res.status(200).json({ user: cachedUser });
     }
 
-    const user = await User.findOne({ userName }).select('-password');
+    let user;
+    if (isFallbackMode()) {
+      user = await getFallbackUserByUserName(userName);
+    } else {
+      user = await User.findOne({ userName }).select('-password');
+    }
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
@@ -51,7 +65,12 @@ export const searchUsers = async (req, res) => {
       };  
     }
 
-    const users = await User.find(query).select('-password').limit(q ? 10 : 50);
+    let users;
+    if (isFallbackMode()) {
+      users = await searchFallbackUsers(q || '');
+    } else {
+      users = await User.find(query).select('-password').limit(q ? 10 : 50);
+    }
 
     return res.status(200).json({ users });
   } catch (error) {
@@ -67,7 +86,12 @@ export const getMe = async (req, res) => {
   }
 
   try {
-    const userData = await User.findById(userId);
+    let userData;
+    if (isFallbackMode()) {
+      userData = await getFallbackUserById(userId);
+    } else {
+      userData = await User.findById(userId);
+    }
 
     if (!userData)
       return res.status(404).json({ message: "user not found" })
@@ -93,16 +117,21 @@ export const userSignUp = async (req, res) => {
     return res.status(400).json({ message: 'All fields are required' })
 
   try {
-    const user = await User.create({
-      userName,
-      email,
-      password
-    })
+    let user;
+    if (isFallbackMode()) {
+      user = await createFallbackUser({ userName, email, password });
+    } else {
+      user = await User.create({
+        userName,
+        email,
+        password
+      });
+    }
 
     const token = getToken(user._id)
 
     res.cookie('jwt', token, { httpOnly: true, maxAge: maxAge * 1000 })
-    return res.status(201).json({ message: 'User created successfully', user: user._id })
+    return res.status(201).json({ message: 'User created successfully', user: user._id || user.id })
 
   } catch (error) {
     console.error('Error during user sign up:', error);
@@ -115,12 +144,28 @@ export const userSignUp = async (req, res) => {
 
 export const userLogin = async (req, res) => {
   const { email, password } = req.body;
+  const normalizedEmail = (email || '').toLowerCase().trim();
 
-  if (!email || !password)
+  if (!normalizedEmail || !password)
     return res.status(400).json({ message: 'All fields are required' })
 
   try {
-    const user = await User.login(email, password)
+    let user;
+    if (isFallbackMode()) {
+      const fallbackUser = await getFallbackUserByEmail(normalizedEmail);
+      console.log('fallback login request', { mode: isFallbackMode(), email: normalizedEmail, found: !!fallbackUser });
+      if (!fallbackUser) {
+        throw new Error('Invalid email');
+      }
+      const isMatch = await bcrypt.compare(password, fallbackUser.password);
+      console.log('fallback password match', isMatch);
+      if (!isMatch) {
+        throw new Error('Invalid password');
+      }
+      user = fallbackUser;
+    } else {
+      user = await User.login(normalizedEmail, password)
+    }
 
     const token = getToken(user._id)
 

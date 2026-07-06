@@ -1,8 +1,9 @@
 import Message from '../models/Message.js';
 import { getCache, setCache, clearCachePattern } from '../config/redis.js';
+import { createFallbackMessage, listFallbackMessages, isFallbackMode } from '../config/fallbackStore.js';
 
 export const sendMessage = async (req, res) => {
-  const senderId = req.user;
+  const senderId = req.user?._id || req.user;
   if (!senderId) {
     return res.status(401).json({ message: 'Unauthorized' });
   }
@@ -14,18 +15,21 @@ export const sendMessage = async (req, res) => {
       return res.status(400).json({ message: 'Receiver and content are required' });
     }
 
-    const message = await Message.create({
-      sender: senderId,
-      receiver,
-      content,
-    });
+    let message;
+    if (isFallbackMode()) {
+      message = await createFallbackMessage({ sender: senderId, receiver, content });
+    } else {
+      message = await Message.create({
+        sender: senderId,
+        receiver,
+        content,
+      });
+    }
 
-    // Invalidate cache for messages between sender and receiver
     const sortedUserIds = [senderId, receiver].sort();
     const cachePattern = `messages:${sortedUserIds[0]}:${sortedUserIds[1]}:*`;
     await clearCachePattern(cachePattern);
 
-    // TODO: Emit message via socket.io
     return res.status(201).json({ message: 'Message sent successfully', data: message });
   } catch (error) {
     console.error('Error sending message:', error);
@@ -35,7 +39,7 @@ export const sendMessage = async (req, res) => {
 
 
 export const getMessage = async (req, res) => {
-  const userId = req.user
+  const userId = req.user?._id || req.user;
 
   if (!userId) {
     return res.status(401).json({ message: 'Unauthorized' });
@@ -57,12 +61,18 @@ export const getMessage = async (req, res) => {
       return res.status(200).json({ messages: cachedMessages });
     }
 
-    const messages = await Message.find({
-      $or: [
-        { sender: userId, receiver: withUserId },
-        { sender: withUserId, receiver: userId },
-      ],
-    }).populate('sender', 'userName email').populate('receiver', 'userName email').sort({ createdAt: 1 });
+    let messages;
+    if (isFallbackMode()) {
+      messages = await listFallbackMessages(userId, withUserId);
+    } else {
+      messages = await Message.find({
+        $or: [
+          { sender: userId, receiver: withUserId },
+          { sender: withUserId, receiver: userId },
+        ],
+      }).populate('sender', 'userName email').populate('receiver', 'userName email').sort({ createdAt: 1 });
+    }
+
     await setCache(cacheKey, messages, 3600);
     return res.status(200).json({ messages });
   } catch (error) {
