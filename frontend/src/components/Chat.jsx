@@ -26,13 +26,17 @@ const Chat = () => {
   }, [searchParams]);
 
   return (
-    <div className="chat-container flex h-screen">
-      <div className="chat-list w-1/3 border-r">
+    <div className="chat-container flex h-screen bg-chat-bg">
+      <div className="chat-list w-1/3 border-r border-border bg-parchment">
         <ChatList onSelectUser={setSelectedUser} />
       </div>
       <div className="chat-main flex-1 flex flex-col">
-        <ChatHeader selectedUser={selectedUser} />
-        <ChatRoom selectedUser={selectedUser} />
+        <div className="chat-header p-5 border-b border-border bg-parchment flex-shrink-0">
+          <ChatHeader selectedUser={selectedUser} />
+        </div>
+        <div className="chat-messages flex-1 overflow-y-auto p-4 flex flex-col gap-3 scroll-smooth">
+          <ChatRoom selectedUser={selectedUser} />
+        </div>
       </div>
     </div>
   );

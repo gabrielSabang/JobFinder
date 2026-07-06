@@ -3,7 +3,7 @@ import User from '../models/User.js'
 import { setCache, getCache, deleteCache } from '../config/redis.js';
 
 export const createPost = async (req, res) => {
-  const userId = req.user
+  const userId = req.user?._id || req.user;
   if (!userId)
     return res.status(401).json({ message: 'Unauthorized' })
   
@@ -33,7 +33,7 @@ export const createPost = async (req, res) => {
 
 
 export const getPosts = async (req, res) => {
-  const userId = req.user;
+  const userId = req.user?._id || req.user;
   if (!userId)
     return res.status(401).json({ message: 'Unauthorized' })
   
@@ -64,7 +64,7 @@ export const getPosts = async (req, res) => {
 }
 
 export const getPost = async (req, res) => {
-  const userId = req.user;
+  const userId = req.user?._id || req.user;
   if (!userId)
     return res.status(401).json({ message: 'Unauthorized' });
   
@@ -121,7 +121,7 @@ export const searchPosts = async (req, res) => {
 }
 
 export const getAllPostsExceptOwn = async (req, res) => {
-  const userId = req.user;
+  const userId = req.user?._id || req.user;
   if (!userId)
     return res.status(401).json({ message: 'Unauthorized' })
   

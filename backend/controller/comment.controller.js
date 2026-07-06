@@ -2,7 +2,7 @@ import Comment from '../models/Comment.js'
 import Post from '../models/Post.js'
 
 export const createComment = async (req, res) => {
-  const userId = req.user
+  const userId = req.user?._id || req.user;
   if (!userId)
     return res.status(401).json({ message: "Unauthorized" })
   
