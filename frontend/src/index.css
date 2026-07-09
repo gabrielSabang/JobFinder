@@ -1,1 +1,15 @@
 @import "tailwindcss";
+
+@theme {
+  --color-cream: #fefcf3;
+  --color-parchment: #faf7ed;
+  --color-ink: #2c2c2c;
+  --color-warm-gray: #6b6258;
+  --color-accent: #e8c547;
+  --color-accent-light: #f0d97a;
+  --color-border: #e5ddd3;
+  --color-chat-bg: #f5f0e8;
+  --font-dm-sans: "DM Sans", sans-serif;
+  --font-playfair: "Playfair Display", serif;
+  --shadow-custom: 0 1px 3px rgba(44, 44, 44, 0.08);
+}

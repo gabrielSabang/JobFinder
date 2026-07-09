@@ -1,38 +1,15 @@
-import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import { API_URLS } from '../config/api';
+import { usePost } from '../hooks';
 
 const PostDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [post, setPost] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const { data, isLoading, error } = usePost(id);
 
-  useEffect(() => {
-    const fetchPost = async () => {
-      try {
-        // Assuming there's an endpoint to get a single post, e.g., /api/posts/:id
-        const { data } = await axios.get(`${API_URLS.POSTS}/${id}`, { withCredentials: true });
-        setPost(data.post);
-      } catch (err) {
-        if (err.response?.status === 401) {
-          setError('Please log in to view this post');
-        } else {
-          setError('Failed to fetch post');
-          console.error(err);
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
+  if (isLoading) return <div className="text-center py-8 text-ink">Loading...</div>;
+  if (error) return <div className="text-center py-8 text-accent">{error.response?.status === 401 ? 'Please log in to view this post' : 'Failed to fetch post'}</div>;
 
-    fetchPost();
-  }, [id]);
-
-  if (loading) return <div className="text-center py-8 text-ink">Loading...</div>;
-  if (error) return <div className="text-center py-8 text-accent">{error}</div>;
+  const post = data?.post;
   if (!post) return <div className="text-center py-8 text-warm-gray">Post not found.</div>;
 
   return (

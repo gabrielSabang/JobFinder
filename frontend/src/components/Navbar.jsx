@@ -1,7 +1,7 @@
 import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useContext, useState, useEffect, useRef } from 'react';
 import AuthContext from '../context/AuthContext';
-import axios from 'axios';
+import api from '../config/axios';
 import { API_URLS } from '../config/api';
 
 const Navbar = () => {
@@ -20,19 +20,23 @@ const Navbar = () => {
 
   useEffect(() => {
     if (searchQuery.trim() === '') {
+      setSearchResults([]);
+      setIsDropdownOpen(false);
       return;
     }
 
+    const abortController = new AbortController();
+
     const fetchUsers = async () => {
       try {
-        const { data } = await axios.get(
-          `${API_URLS.USERS}?q=${encodeURIComponent(searchQuery)}`,
-          { withCredentials: true }
-        );
+        const { data } = await api.get(`${API_URLS.USERS}`, {
+          params: { q: searchQuery },
+          signal: abortController.signal,
+        });
         setSearchResults(data.users || []);
         setIsDropdownOpen(data.users && data.users.length > 0);
       } catch (error) {
-        if (error.response?.status !== 401) {
+        if (error.name !== 'CanceledError' && error.response?.status !== 401) {
           console.error('Search failed:', error.response?.data || error.message);
         }
         setSearchResults([]);
@@ -44,7 +48,10 @@ const Navbar = () => {
       fetchUsers();
     }, 300);
 
-    return () => clearTimeout(debounceTimer);
+    return () => {
+      clearTimeout(debounceTimer);
+      abortController.abort();
+    };
   }, [searchQuery]);
 
   useEffect(() => {
@@ -178,7 +185,7 @@ const Navbar = () => {
               </div>
             )}
           </div>
-  </nav>
+    </nav>
   )
 }
 

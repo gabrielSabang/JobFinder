@@ -1,5 +1,5 @@
 import { createContext, useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../config/axios';
 import { API_URLS } from '../config/api';
 
 const AuthContext = createContext();
@@ -14,7 +14,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      await axios.post(`${API_URLS.USERS}/logout`, {}, { withCredentials: true });
+      await api.post(`${API_URLS.USERS}/logout`, {});
     } catch (error) {
       console.error('Logout API call failed', error);
     } finally {
@@ -25,9 +25,7 @@ export const AuthProvider = ({ children }) => {
     useEffect(() => {
     const checkUserStatus = async () => {
       try {
-        const { data } = await axios.get(`${API_URLS.USERS}/me`, {
-          withCredentials: true,
-        });
+        const { data } = await api.get(`${API_URLS.USERS}/me`);
         setUserInfo(data.user);
       } catch (error) {
         if (error.response?.status !== 401) {

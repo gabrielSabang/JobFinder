@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { ChatList } from './ChatDetails/ChatList.jsx';
-import { ChatHeader } from './ChatDetails/ChatHeade.jsx';
+import { ChatHeader } from './ChatDetails/ChatHeader.jsx';
 import { ChatRoom } from './ChatDetails/ChatRoom.jsx';
-import axios from 'axios';
+import api from '../config/axios';
 import { API_URLS } from '../config/api';
 
 const Chat = () => {
@@ -15,7 +15,7 @@ const Chat = () => {
     if (withUserId) {
       const fetchUser = async () => {
         try {
-          const { data } = await axios.get(`${API_URLS.USERS}/${withUserId}`, { withCredentials: true });
+          const { data } = await api.get(`${API_URLS.USERS}/${withUserId}`);
           setSelectedUser(data.user);
         } catch (error) {
           console.error('Error fetching user:', error);
@@ -26,15 +26,15 @@ const Chat = () => {
   }, [searchParams]);
 
   return (
-    <div className="chat-container flex h-screen bg-chat-bg">
-      <div className="chat-list w-1/3 border-r border-border bg-parchment">
+    <div className="flex h-[calc(100vh-4rem)] bg-chat-bg">
+      <div className="w-full md:w-1/3 lg:w-1/4 border-r border-border bg-parchment overflow-y-auto">
         <ChatList onSelectUser={setSelectedUser} />
       </div>
-      <div className="chat-main flex-1 flex flex-col">
-        <div className="chat-header p-5 border-b border-border bg-parchment flex-shrink-0">
+      <div className="hidden md:flex flex-1 flex-col">
+        <div className="p-5 border-b border-border bg-parchment flex-shrink-0">
           <ChatHeader selectedUser={selectedUser} />
         </div>
-        <div className="chat-messages flex-1 overflow-y-auto p-4 flex flex-col gap-3 scroll-smooth">
+        <div className="flex-1 overflow-y-auto flex flex-col">
           <ChatRoom selectedUser={selectedUser} />
         </div>
       </div>

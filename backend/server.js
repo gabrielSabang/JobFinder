@@ -11,7 +11,6 @@ import blogPostRoutes from './routes/blogPost.routes.js';
 import commentRoutes from './routes/comment.routes.js';
 import messageRoutes from './routes/message.routes.js';
 import Message from './models/Message.js';
-import { authenticateToken } from './middleware/auth.middleware.js';
 import { setFallbackMode, createFallbackMessage, isFallbackMode } from './config/fallbackStore.js';
 
 dotenv.config();
@@ -52,9 +51,9 @@ app.use(cors({
 }));
 
 app.use('/api/users', userRoutes); 
-app.use('/api/posts', authenticateToken, blogPostRoutes);
-app.use('/api/comments', authenticateToken, commentRoutes);
-app.use('/api/messages', authenticateToken, messageRoutes);
+app.use('/api/posts', blogPostRoutes);
+app.use('/api/comments', commentRoutes);
+app.use('/api/messages', messageRoutes);
 
 io.on('connection', (socket) => {
   console.log('a user connected', socket.id);

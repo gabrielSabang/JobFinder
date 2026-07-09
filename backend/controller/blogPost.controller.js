@@ -1,6 +1,6 @@
 import Post from '../models/Post.js'
 import User from '../models/User.js'
-import { setCache, getCache, deleteCache } from '../config/redis.js';
+import { setCache, getCache, clearCachePattern } from '../config/redis.js';
 
 export const createPost = async (req, res) => {
   const userId = req.user?._id || req.user;
@@ -21,8 +21,8 @@ export const createPost = async (req, res) => {
       author: userId
     })
 
-    const cacheKey = `posts:user:${userId}:*`; 
-    await deleteCache(cacheKey);
+    await clearCachePattern(`posts:user:${userId}:*`);
+    await clearCachePattern(`posts:all_except:*`);
 
     return res.status(201).json({ message: 'Post created successfully', post })
   } catch (error) {
@@ -89,8 +89,13 @@ export const getPostsByUser = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    const posts = await Post.find({ author: user._id }).populate('author', 'userName email').sort({ createdAt: -1 });
-    return res.status(200).json({ posts });
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const posts = await Post.find({ author: user._id }).populate('author', 'userName email').sort({ createdAt: -1 }).skip(skip).limit(limit);
+    const totalPosts = await Post.countDocuments({ author: user._id });
+    return res.status(200).json({ posts, totalPosts, page, limit });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: 'Server error' });

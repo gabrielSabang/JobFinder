@@ -51,30 +51,43 @@ export const getMessage = async (req, res) => {
       return res.status(400).json({ message: "withUserId parameter not found" });
     }
 
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 50;
+    const skip = (page - 1) * limit;
+
     // Create a consistent cache key by sorting the two user IDs
     const sortedUserIds = [userId, withUserId].sort();
-    const cacheKey = `messages:${sortedUserIds[0]}:${sortedUserIds[1]}`;
+    const cacheKey = `messages:${sortedUserIds[0]}:${sortedUserIds[1]}:${page}:${limit}`;
 
     const cachedMessages = await getCache(cacheKey);
     if (cachedMessages) {
       console.log(`Cache hit for messages between ${userId} and ${withUserId}`);
-      return res.status(200).json({ messages: cachedMessages });
+      return res.status(200).json({ messages: cachedMessages, page, limit });
     }
 
     let messages;
+    let totalMessages;
     if (isFallbackMode()) {
       messages = await listFallbackMessages(userId, withUserId);
+      totalMessages = messages.length;
     } else {
       messages = await Message.find({
         $or: [
           { sender: userId, receiver: withUserId },
           { sender: withUserId, receiver: userId },
         ],
-      }).populate('sender', 'userName email').populate('receiver', 'userName email').sort({ createdAt: 1 });
+      }).populate('sender', 'userName email').populate('receiver', 'userName email').sort({ createdAt: -1 }).skip(skip).limit(limit);
+
+      totalMessages = await Message.countDocuments({
+        $or: [
+          { sender: userId, receiver: withUserId },
+          { sender: withUserId, receiver: userId },
+        ],
+      });
     }
 
     await setCache(cacheKey, messages, 3600);
-    return res.status(200).json({ messages });
+    return res.status(200).json({ messages, totalMessages, page, limit });
   } catch (error) {
     console.error('Error fetching messages:', error);
     return res.status(500).json({ message: 'Server error while fetching messages.' });
